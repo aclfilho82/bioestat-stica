@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Estatístico Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-100">
+
+<div class="max-w-6xl mx-auto p-6">
+
+    <h1 class="text-3xl font-bold text-slate-700 mb-6">📊 Sistema Estatístico Profissional</h1>
+
+    <div class="bg-white p-6 rounded-2xl shadow mb-6 grid md:grid-cols-2 gap-4">
+        <div>
+            <label class="font-semibold">Arquivo Excel</label>
+            <input type="file" id="fileInput" class="mt-2 w-full border p-2 rounded">
+        </div>
+
+        <div>
+            <label class="font-semibold">Intervalo de Classe</label>
+            <input type="number" id="intervalo" class="mt-2 w-full border p-2 rounded">
+        </div>
+
+        <div class="md:col-span-2">
+            <label class="font-semibold">Dados</label>
+            <textarea id="manualData" rows="4" class="mt-2 w-full border p-3 rounded" placeholder="Digite números separados por vírgula ou espaço"></textarea>
+        </div>
+
+        <div class="md:col-span-2 text-right">
+            <button onclick="processar()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">Processar</button>
+        </div>
+    </div>
+
+    <div id="resultado"></div>
+
+</div>
+
+<script>
+
+function lerDados() {
+    return document.getElementById("manualData").value
+        .split(/,|\s+/)
+        .map(v => v.trim())
+        .filter(v => v !== "")
+        .map(Number)
+        .filter(n => !isNaN(n));
+}
+
+// Excel
+
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        let data = new Uint8Array(e.target.result);
+        let workbook = XLSX.read(data, {type: 'array'});
+        let sheet = workbook.Sheets[workbook.SheetNames[0]];
+        let json = XLSX.utils.sheet_to_json(sheet, {header:1});
+
+        let valores = [];
+        json.forEach(l => l.forEach(c => {
+            if (c !== "" && !isNaN(c)) valores.push(Number(c));
+        }));
+
+        valores.sort((a,b)=>a-b);
+        // 🔥 ORDENA AO IMPORTAR
+        valores.sort((a,b)=>a-b);
+
+        document.getElementById("manualData").value = valores.join(" ");
+    };
+    reader.readAsArrayBuffer(e.target.files[0]);
+});
+
+function media(d) { return d.reduce((a,b)=>a+b,0)/d.length; }
+
+function mediana(d) {
+    let n=d.length;
+    return n%2===0 ? (d[n/2-1]+d[n/2])/2 : d[Math.floor(n/2)];
+}
+
+function moda(d) {
+    let f={};
+    d.forEach(v=>f[v]=(f[v]||0)+1);
+    let max=Math.max(...Object.values(f));
+    return Object.keys(f).filter(k=>f[k]===max).join(", ");
+}
+
+function tabelaCard(titulo, conteudo){
+    return `<div class="bg-white p-5 rounded-2xl shadow mb-6">
+    <h3 class="text-xl font-semibold mb-3">${titulo}</h3>${conteudo}</div>`;
+}
+
+function processar(){
+
+    let dados = lerDados();
+    if(dados.length===0) return alert("Insira dados!");
+
+    dados.sort((a,b)=>a-b);
+    let total = dados.length;
+
+    let html="";
+
+    // Estatísticas
+    html += tabelaCard("📌 Estatísticas",
+        `Média: <b>${media(dados).toFixed(2)}</b><br>
+         Mediana: <b>${mediana(dados)}</b><br>
+         Moda: <b>${moda(dados)}</b>`);
+
+    // Dados ordenados
+    html += tabelaCard("📌 Dados Ordenados", dados.join(", "));
+
+    // SEM INTERVALO (PADRÃO ORIGINAL)
+    let freq={};
+    dados.forEach(v=>freq[v]=(freq[v]||0)+1);
+
+    let acum=0;
+
+    let tabela1 = "<table class='border-collapse border w-full text-center'><tr><th class='border p-2'>Valor</th><th class='border p-2'>fi</th><th class='border p-2'>fri</th><th class='border p-2'>Fi</th><th class='border p-2'>Fri</th></tr>";
+
+    Object.keys(freq).sort((a,b)=>a-b).forEach(v=>{
+        let fi=freq[v];
+        let fri=fi/total;
+        acum+=fi;
+        let Fri=acum/total;
+
+        tabela1 += `<tr>
+        <td class='border p-2'>${v}</td>
+        <td class='border p-2'>${fi}</td>
+        <td class='border p-2'>${fri.toFixed(3)}</td>
+        <td class='border p-2'>${acum}</td>
+        <td class='border p-2'>${Fri.toFixed(3)}</td>
+        </tr>`;
+    });
+
+    tabela1 += `<tr>
+    <td class='border p-2'><b>Total</b></td>
+    <td class='border p-2'>${total}</td>
+    <td class='border p-2'>1.000</td>
+    <td class='border p-2'>${total}</td>
+    <td class='border p-2'>1.000</td>
+    </tr></table>`;
+
+    html += tabelaCard("📊 Distribuição SEM Intervalo", tabela1);
+
+    // COM INTERVALO (PADRÃO ORIGINAL)
+    let intervalo = parseFloat(document.getElementById("intervalo").value);
+
+    if(intervalo>0){
+
+        let min=dados[0], max=dados[dados.length-1];
+        let classes=[];
+
+        for(let i=min;i<=max;i+=intervalo){
+            classes.push({inicio:i,fim:i+intervalo,fi:0});
+        }
+
+        dados.forEach(v=>{
+            for(let i=0;i<classes.length;i++){
+                let c=classes[i];
+                if(i===classes.length-1){
+                    if(v>=c.inicio && v<=c.fim){c.fi++; break;}
+                } else {
+                    if(v>=c.inicio && v<c.fim){c.fi++; break;}
+                }
+            }
+        });
+
+        acum=0;
+
+        let tabela2 = "<table class='border-collapse border w-full text-center'><tr><th class='border p-2'>Classe</th><th class='border p-2'>fi</th><th class='border p-2'>xi</th><th class='border p-2'>fri</th><th class='border p-2'>Fi</th><th class='border p-2'>Fri</th></tr>";
+
+        classes.forEach(c=>{
+            if(c.fi===0) return;
+
+            let xi=(c.inicio+c.fim)/2;
+            let fri=c.fi/total;
+
+            acum+=c.fi;
+            let Fri=acum/total;
+
+            tabela2 += `<tr>
+            <td class='border p-2'>${c.inicio} |------ ${c.fim}</td>
+            <td class='border p-2'>${c.fi}</td>
+            <td class='border p-2'>${xi}</td>
+            <td class='border p-2'>${fri.toFixed(3)}</td>
+            <td class='border p-2'>${acum}</td>
+            <td class='border p-2'>${Fri.toFixed(3)}</td>
+            </tr>`;
+        });
+
+        tabela2 += `<tr>
+        <td class='border p-2'><b>Total</b></td>
+        <td class='border p-2'>${total}</td>
+        <td class='border p-2'>-</td>
+        <td class='border p-2'>1.000</td>
+        <td class='border p-2'>${total}</td>
+        <td class='border p-2'>1.000</td>
+        </tr></table>`;
+
+        html += tabelaCard("📈 Distribuição COM Intervalo", tabela2);
+    }
+
+    document.getElementById("resultado").innerHTML = html;
+}
+
+</script>
+
+</body>
+</html>
