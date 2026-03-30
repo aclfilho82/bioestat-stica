@@ -3,160 +3,358 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema Estatístico Pro</title>
+<title>StatMaster Pro - Análise Estatística Avançada</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    * { transition: all 0.2s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+    .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .table-wrapper { overflow-x: auto; border-radius: 1rem; }
+    table { min-width: 600px; }
+    .animate-pulse-slow { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.5s ease-out; }
+    .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .btn-primary:hover { background: linear-gradient(135deg, #2563eb, #1d4ed8); transform: scale(0.98); }
+</style>
 </head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100">
 
-<body class="bg-slate-100">
+<div class="max-w-7xl mx-auto p-4 md:p-6">
 
-<div class="max-w-6xl mx-auto p-6">
+    <!-- Header com animação -->
+    <div class="text-center mb-8 fade-in">
+        <h1 class="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <i class="fas fa-chart-line mr-3"></i>StatMaster Pro
+        </h1>
+        <p class="text-slate-500 mt-2">Análise estatística inteligente | Suporte a Excel, gráficos dinâmicos e medidas avançadas</p>
+    </div>
 
-    <h1 class="text-3xl font-bold text-slate-700 mb-6">📊 Sistema para Bioestatística</h1>
+    <!-- Painel de Controle Melhorado -->
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8 border border-slate-200 card-hover">
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label class="font-semibold text-slate-700 flex items-center gap-2"><i class="fas fa-file-excel text-green-600"></i> Arquivo Excel</label>
+                <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-blue-400 focus:outline-none transition">
+                <p class="text-xs text-slate-400">Suporte a XLSX, XLS e CSV (primeira planilha)</p>
+            </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow mb-6 grid md:grid-cols-2 gap-4">
-        <div>
-            <label class="font-semibold">Arquivo Excel</label>
-            <input type="file" id="fileInput" class="mt-2 w-full border p-2 rounded">
-        </div>
+            <div class="space-y-2">
+                <label class="font-semibold text-slate-700 flex items-center gap-2"><i class="fas fa-chart-bar"></i> Intervalo de Classe (opcional)</label>
+                <input type="number" id="intervalo" placeholder="Ex: 5, 10, 0.5" step="any" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-blue-400 focus:outline-none">
+                <p class="text-xs text-slate-400">Deixe em branco para distribuição pontual | Use para dados contínuos</p>
+            </div>
 
-        <div>
-            <label class="font-semibold">Intervalo de Classe</label>
-            <input type="number" id="intervalo" class="mt-2 w-full border p-2 rounded">
-        </div>
+            <div class="md:col-span-2 space-y-2">
+                <label class="font-semibold text-slate-700 flex items-center gap-2"><i class="fas fa-database"></i> Dados Brutos</label>
+                <textarea id="manualData" rows="4" class="w-full border-2 border-slate-200 rounded-xl p-4 font-mono text-sm focus:border-blue-400 focus:outline-none" placeholder="Digite números separados por vírgula, espaço ou quebra de linha&#10;Exemplo: 12, 15, 18, 22, 25, 30, 30, 35"></textarea>
+            </div>
 
-        <div class="md:col-span-2">
-            <label class="font-semibold">Dados</label>
-            <textarea id="manualData" rows="4" class="mt-2 w-full border p-3 rounded" placeholder="Digite números separados por vírgula ou espaço"></textarea>
-        </div>
-
-        <div class="md:col-span-2 text-right">
-            <button onclick="processar()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">Processar</button>
+            <div class="md:col-span-2 flex justify-between items-center gap-3 flex-wrap">
+                <div class="flex gap-2">
+                    <button onclick="limparDados()" class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-xl transition flex items-center gap-2"><i class="fas fa-eraser"></i> Limpar</button>
+                    <button onclick="exemploAutomatico()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded-xl transition flex items-center gap-2"><i class="fas fa-chart-simple"></i> Carregar Exemplo</button>
+                </div>
+                <button onclick="processar()" class="btn-primary text-white px-8 py-2 rounded-xl shadow-lg hover:shadow-xl transition flex items-center gap-2 font-bold"><i class="fas fa-calculator"></i> Processar & Analisar</button>
+            </div>
         </div>
     </div>
 
-    <div id="resultado"></div>
-
+    <!-- Área de Resultados Dinâmica -->
+    <div id="resultado" class="space-y-6"></div>
 </div>
 
 <script>
-
-function lerDados() {
-    return document.getElementById("manualData").value
-        .split(/,|\s+/)
-        .map(v => v.trim())
-        .filter(v => v !== "")
-        .map(Number)
-        .filter(n => !isNaN(n));
-}
-
-// Excel
-
-document.getElementById('fileInput').addEventListener('change', function(e) {
-    let reader = new FileReader();
-    reader.onload = function(e) {
-        let data = new Uint8Array(e.target.result);
-        let workbook = XLSX.read(data, {type: 'array'});
-        let sheet = workbook.Sheets[workbook.SheetNames[0]];
-        let json = XLSX.utils.sheet_to_json(sheet, {header:1});
-
-        let valores = [];
-        json.forEach(l => l.forEach(c => {
-            if (c !== "" && !isNaN(c)) valores.push(Number(c));
-        }));
-
-        valores.sort((a,b)=>a-b);
-        // 🔥 ORDENA AO IMPORTAR
-        valores.sort((a,b)=>a-b);
-
-        document.getElementById("manualData").value = valores.join(" ");
-    };
-    reader.readAsArrayBuffer(e.target.files[0]);
-});
-
+// ======================= FUNÇÕES ESTATÍSTICAS AVANÇADAS =======================
 function media(d) { return d.reduce((a,b)=>a+b,0)/d.length; }
 
 function mediana(d) {
     let n=d.length;
-    return n%2===0 ? (d[n/2-1]+d[n/2])/2 : d[Math.floor(n/2)];
+    if(n%2===0) return (d[n/2-1]+d[n/2])/2;
+    return d[Math.floor(n/2)];
 }
 
 function moda(d) {
-    let f={};
-    d.forEach(v=>f[v]=(f[v]||0)+1);
-    let max=Math.max(...Object.values(f));
-    return Object.keys(f).filter(k=>f[k]===max).join(", ");
+    let freq={};
+    d.forEach(v=>freq[v]=(freq[v]||0)+1);
+    let maxFreq = Math.max(...Object.values(freq));
+    let modas = Object.keys(freq).filter(k=>freq[k]===maxFreq);
+    if(modas.length === Object.keys(freq).length) return "Amodal (todos valores únicos)";
+    return modas.join(", ");
 }
 
-function tabelaCard(titulo, conteudo){
-    return `<div class="bg-white p-5 rounded-2xl shadow mb-6">
-    <h3 class="text-xl font-semibold mb-3">${titulo}</h3>${conteudo}</div>`;
+function varianciaAmostral(d, mediaVal) {
+    let somaQuad = d.reduce((acc,val)=>acc + Math.pow(val-mediaVal,2),0);
+    return somaQuad/(d.length-1);
 }
 
-function processar(){
+function desvioPadraoAmostral(d, mediaVal) {
+    return Math.sqrt(varianciaAmostral(d, mediaVal));
+}
 
+function coeficienteVariacao(mediaVal, dpVal) {
+    if(mediaVal === 0) return "Indefinido";
+    return (dpVal/mediaVal)*100;
+}
+
+function quartis(d) {
+    let n = d.length;
+    let q1Pos = (n+1)*0.25;
+    let q2Pos = (n+1)*0.5;
+    let q3Pos = (n+1)*0.75;
+    
+    function getPercentil(pos) {
+        let idx = Math.floor(pos);
+        let frac = pos - idx;
+        if(idx <= 0) return d[0];
+        if(idx >= n-1) return d[n-1];
+        return d[idx-1] + frac*(d[idx] - d[idx-1]);
+    }
+    
+    return {
+        Q1: getPercentil(q1Pos),
+        Q2: getPercentil(q2Pos),
+        Q3: getPercentil(q3Pos),
+        IQR: getPercentil(q3Pos) - getPercentil(q1Pos)
+    };
+}
+
+function assimetria(d, mediaVal, dpVal) {
+    if(dpVal===0) return 0;
+    let n = d.length;
+    let somaCubo = d.reduce((acc,val)=>acc + Math.pow((val-mediaVal)/dpVal,3),0);
+    return (somaCubo/n);
+}
+
+function curtose(d, mediaVal, dpVal) {
+    if(dpVal===0) return 0;
+    let n = d.length;
+    let somaQuarta = d.reduce((acc,val)=>acc + Math.pow((val-mediaVal)/dpVal,4),0);
+    return (somaQuarta/n) - 3;
+}
+
+function resumoEstatistico(dados) {
+    let sorted = [...dados].sort((a,b)=>a-b);
+    let n = dados.length;
+    let min = sorted[0];
+    let max = sorted[sorted.length-1];
+    let mean = media(dados);
+    let median = mediana(sorted);
+    let mode = moda(dados);
+    let variancia = varianciaAmostral(dados, mean);
+    let desvioPadrao = desvioPadraoAmostral(dados, mean);
+    let cv = coeficienteVariacao(mean, desvioPadrao);
+    let quart = quartis(sorted);
+    let skew = assimetria(dados, mean, desvioPadrao);
+    let kurt = curtose(dados, mean, desvioPadrao);
+    let amplitude = max - min;
+    
+    return { n, min, max, amplitude, mean, median, mode, variancia, desvioPadrao, cv, quart, skew, kurt };
+}
+
+// ======================= FUNÇÕES DE VISUALIZAÇÃO =======================
+let histogramChart = null;
+
+function renderizarGraficos(dados, classesIntervalo=null) {
+    let ctx = document.getElementById('histogramCanvas');
+    if(ctx) {
+        if(histogramChart) histogramChart.destroy();
+        
+        let labels = [];
+        let frequencias = [];
+        
+        if(classesIntervalo && classesIntervalo.length>0) {
+            classesIntervalo.forEach(c => {
+                if(c.fi > 0) {
+                    labels.push(`${c.inicio}–${c.fim}`);
+                    frequencias.push(c.fi);
+                }
+            });
+        } else {
+            // Distribuição pontual (limitamos a 30 pontos para não poluir)
+            let freqMap = {};
+            dados.forEach(v=>freqMap[v]=(freqMap[v]||0)+1);
+            let sortedKeys = Object.keys(freqMap).map(Number).sort((a,b)=>a-b);
+            // Se muitos valores únicos, limitar a 30 e mostrar alerta sutil
+            if(sortedKeys.length > 30) {
+                labels = sortedKeys.slice(0,30).map(k=>k.toString());
+                frequencias = sortedKeys.slice(0,30).map(k=>freqMap[k]);
+                document.getElementById('graficoAviso')?.remove();
+                let aviso = document.createElement('div');
+                aviso.id = 'graficoAviso';
+                aviso.className = 'text-amber-600 text-sm mt-2 flex items-center gap-2';
+                aviso.innerHTML = '<i class="fas fa-info-circle"></i> Exibindo apenas 30 valores únicos mais frequentes.';
+                document.getElementById('graficoContainer')?.appendChild(aviso);
+            } else {
+                labels = sortedKeys.map(k=>k.toString());
+                frequencias = sortedKeys.map(k=>freqMap[k]);
+            }
+        }
+        
+        histogramChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Frequência Absoluta (fi)',
+                    data: frequencias,
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: 'rgba(37, 99, 235, 1)',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { callbacks: { label: (ctx) => `Frequência: ${ctx.raw}` } }
+                },
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Frequência (fi)', font: { weight: 'bold' } } },
+                    x: { title: { display: true, text: classesIntervalo ? 'Intervalos de Classe' : 'Valores', font: { weight: 'bold' } }, ticks: { maxRotation: 45, minRotation: 45 } }
+                }
+            }
+        });
+    }
+}
+
+// ======================= TABELAS AVANÇADAS =======================
+function tabelaCard(titulo, icone, conteudo, corFundo="white") {
+    return `<div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 fade-in card-hover">
+        <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
+            <h3 class="text-xl font-bold text-slate-700 flex items-center gap-2"><i class="${icone} text-blue-600"></i> ${titulo}</h3>
+        </div>
+        <div class="p-6">${conteudo}</div>
+    </div>`;
+}
+
+function gerarEstatisticasCard(stats) {
+    let skewDesc = stats.skew > 0.5 ? "Assimetria Positiva (cauda à direita)" : (stats.skew < -0.5 ? "Assimetria Negativa (cauda à esquerda)" : "Aproximadamente Simétrica");
+    let kurtDesc = stats.kurt > 1 ? "Distribuição Leptocúrtica (picos acentuados)" : (stats.kurt < -1 ? "Platicúrtica (achatada)" : "Mesocúrtica (normal)");
+    
+    return `
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl text-center"><i class="fas fa-chart-line text-2xl text-blue-600 mb-2 block"></i><div class="text-xs text-slate-500">Média</div><div class="text-2xl font-bold text-blue-700">${stats.mean.toFixed(4)}</div></div>
+            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 rounded-xl text-center"><i class="fas fa-chart-simple text-2xl text-emerald-600 mb-2 block"></i><div class="text-xs text-slate-500">Mediana</div><div class="text-2xl font-bold text-emerald-700">${stats.median.toFixed(4)}</div></div>
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl text-center"><i class="fas fa-chart-pie text-2xl text-purple-600 mb-2 block"></i><div class="text-xs text-slate-500">Moda</div><div class="text-lg font-bold text-purple-700 truncate">${stats.mode}</div></div>
+            <div class="bg-gradient-to-br from-amber-50 to-amber-100 p-4 rounded-xl text-center"><i class="fas fa-waveform text-2xl text-amber-600 mb-2 block"></i><div class="text-xs text-slate-500">Desvio Padrão (s)</div><div class="text-2xl font-bold text-amber-700">${stats.desvioPadrao.toFixed(4)}</div></div>
+            <div class="bg-gradient-to-br from-rose-50 to-rose-100 p-4 rounded-xl text-center"><i class="fas fa-chart-area text-2xl text-rose-600 mb-2 block"></i><div class="text-xs text-slate-500">Variância</div><div class="text-xl font-bold text-rose-700">${stats.variancia.toFixed(4)}</div></div>
+            <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 rounded-xl text-center"><i class="fas fa-percent text-2xl text-indigo-600 mb-2 block"></i><div class="text-xs text-slate-500">C.V. (%)</div><div class="text-xl font-bold text-indigo-700">${typeof stats.cv === 'number' ? stats.cv.toFixed(2)+'%' : stats.cv}</div></div>
+            <div class="bg-gradient-to-br from-cyan-50 to-cyan-100 p-4 rounded-xl text-center"><i class="fas fa-arrows-left-right text-2xl text-cyan-600 mb-2 block"></i><div class="text-xs text-slate-500">Amplitude</div><div class="text-xl font-bold text-cyan-700">${stats.amplitude.toFixed(4)}</div></div>
+            <div class="bg-gradient-to-br from-slate-50 to-slate-100 p-4 rounded-xl text-center"><i class="fas fa-chart-gantt text-2xl text-slate-600 mb-2 block"></i><div class="text-xs text-slate-500">n (tamanho)</div><div class="text-2xl font-bold text-slate-700">${stats.n}</div></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-4 border-t border-slate-200">
+            <div class="bg-gray-50 p-3 rounded-lg"><span class="font-semibold">📊 Assimetria:</span> ${stats.skew.toFixed(4)} (${skewDesc})</div>
+            <div class="bg-gray-50 p-3 rounded-lg"><span class="font-semibold">📈 Curtose:</span> ${stats.kurt.toFixed(4)} (${kurtDesc})</div>
+            <div class="bg-gray-50 p-3 rounded-lg"><span class="font-semibold">🔹 Q1 (1º Quartil):</span> ${stats.quart.Q1.toFixed(4)}</div>
+            <div class="bg-gray-50 p-3 rounded-lg"><span class="font-semibold">🔸 Q3 (3º Quartil):</span> ${stats.quart.Q3.toFixed(4)}</div>
+            <div class="bg-gray-50 p-3 rounded-lg"><span class="font-semibold">📦 IQR (Intervalo Interquartil):</span> ${stats.quart.IQR.toFixed(4)}</div>
+            <div class="bg-gray-50 p-3 rounded-lg"><span class="font-semibold">🎯 Mínimo / Máximo:</span> ${stats.min.toFixed(4)} / ${stats.max.toFixed(4)}</div>
+        </div>
+    `;
+}
+
+function gerarTabelaFrequencia(dados, total, usarIntervalo=false, classesObj=null) {
+    if(usarIntervalo && classesObj && classesObj.length>0) {
+        let acum=0;
+        let linhas = "";
+        classesObj.forEach(c=>{
+            if(c.fi===0) return;
+            let fri = c.fi/total;
+            acum += c.fi;
+            let friAcum = acum/total;
+            let xi = (c.inicio + c.fim)/2;
+            linhas += `<tr class="hover:bg-slate-50 transition">
+                <td class="border border-slate-200 p-3 font-mono">${c.inicio.toFixed(4)} ⊢ ${c.fim.toFixed(4)}</td>
+                <td class="border border-slate-200 p-3 text-center">${c.fi}</td>
+                <td class="border border-slate-200 p-3 text-center">${xi.toFixed(4)}</td>
+                <td class="border border-slate-200 p-3 text-center">${fri.toFixed(4)}</td>
+                <td class="border border-slate-200 p-3 text-center">${acum}</td>
+                <td class="border border-slate-200 p-3 text-center">${friAcum.toFixed(4)}</td>
+            </tr>`;
+        });
+        linhas += `<tr class="bg-slate-100 font-bold"><td class="border p-3">Total</td><td class="border p-3 text-center">${total}</td><td class="border p-3 text-center">-</td><td class="border p-3 text-center">1.0000</td><td class="border p-3 text-center">${total}</td><td class="border p-3 text-center">1.0000</td></tr>`;
+        return `<div class="table-wrapper"><table class="min-w-full bg-white text-sm"><thead><tr class="bg-slate-100"><th class="border p-3">Classe</th><th class="border p-3">fi</th><th class="border p-3">xi (ponto médio)</th><th class="border p-3">fri</th><th class="border p-3">Fi</th><th class="border p-3">Fri</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
+    } else {
+        let freq={};
+        dados.forEach(v=>freq[v]=(freq[v]||0)+1);
+        let acum=0;
+        let linhas = "";
+        let sortedVals = Object.keys(freq).map(Number).sort((a,b)=>a-b);
+        sortedVals.forEach(v=>{
+            let fi=freq[v];
+            let fri=fi/total;
+            acum+=fi;
+            let friAcum=acum/total;
+            linhas += `<tr class="hover:bg-slate-50"><td class="border p-3 font-mono">${v}</td><td class="border p-3 text-center">${fi}</td><td class="border p-3 text-center">${fri.toFixed(4)}</td><td class="border p-3 text-center">${acum}</td><td class="border p-3 text-center">${friAcum.toFixed(4)}</td></tr>`;
+        });
+        linhas += `<tr class="bg-slate-100 font-bold"><td class="border p-3">Total</td><td class="border p-3 text-center">${total}</td><td class="border p-3 text-center">1.0000</td><td class="border p-3 text-center">${total}</td><td class="border p-3 text-center">1.0000</td></tr>`;
+        return `<div class="table-wrapper"><table class="min-w-full bg-white text-sm"><thead><tr class="bg-slate-100"><th class="border p-3">Valor</th><th class="border p-3">fi</th><th class="border p-3">fri</th><th class="border p-3">Fi</th><th class="border p-3">Fri</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
+    }
+}
+
+// ======================= PROCESSAMENTO PRINCIPAL =======================
+function lerDados() {
+    return document.getElementById("manualData").value
+        .split(/,|\s|\n/)
+        .map(v=>v.trim())
+        .filter(v=>v!=="")
+        .map(Number)
+        .filter(n=>!isNaN(n) && isFinite(n));
+}
+
+function limparDados() {
+    document.getElementById("manualData").value = "";
+    document.getElementById("intervalo").value = "";
+    document.getElementById("resultado").innerHTML = '<div class="text-center text-slate-400 p-12 bg-white rounded-2xl shadow"><i class="fas fa-chart-line text-4xl mb-3"></i><p>Nenhuma análise carregada. Insira dados e clique em Processar.</p></div>';
+    if(histogramChart) histogramChart.destroy();
+}
+
+function exemploAutomatico() {
+    document.getElementById("manualData").value = "12, 15, 18, 22, 25, 30, 30, 35, 40, 42, 45, 50, 55, 60, 65, 70, 70, 75, 80, 85, 90, 95, 100, 110, 120, 130, 140, 150";
+    document.getElementById("intervalo").value = "15";
+    processar();
+}
+
+function processar() {
     let dados = lerDados();
-    if(dados.length===0) return alert("Insira dados!");
-
+    if(dados.length===0) {
+        alert("⚠️ Nenhum dado válido! Insira números ou carregue um arquivo.");
+        return;
+    }
+    
     dados.sort((a,b)=>a-b);
     let total = dados.length;
-
-    let html="";
-
-    // Estatísticas
-    html += tabelaCard("📌 Estatísticas",
-        `Média: <b>${media(dados).toFixed(2)}</b><br>
-         Mediana: <b>${mediana(dados)}</b><br>
-         Moda: <b>${moda(dados)}</b>`);
-
-    // Dados ordenados
-    html += tabelaCard("📌 Dados Ordenados", dados.join(", "));
-
-    // SEM INTERVALO (PADRÃO ORIGINAL)
-    let freq={};
-    dados.forEach(v=>freq[v]=(freq[v]||0)+1);
-
-    let acum=0;
-
-    let tabela1 = "<table class='border-collapse border w-full text-center'><tr><th class='border p-2'>Valor</th><th class='border p-2'>fi</th><th class='border p-2'>fri</th><th class='border p-2'>Fi</th><th class='border p-2'>Fri</th></tr>";
-
-    Object.keys(freq).sort((a,b)=>a-b).forEach(v=>{
-        let fi=freq[v];
-        let fri=fi/total;
-        acum+=fi;
-        let Fri=acum/total;
-
-        tabela1 += `<tr>
-        <td class='border p-2'>${v}</td>
-        <td class='border p-2'>${fi}</td>
-        <td class='border p-2'>${fri.toFixed(3)}</td>
-        <td class='border p-2'>${acum}</td>
-        <td class='border p-2'>${Fri.toFixed(3)}</td>
-        </tr>`;
-    });
-
-    tabela1 += `<tr>
-    <td class='border p-2'><b>Total</b></td>
-    <td class='border p-2'>${total}</td>
-    <td class='border p-2'>1.000</td>
-    <td class='border p-2'>${total}</td>
-    <td class='border p-2'>1.000</td>
-    </tr></table>`;
-
-    html += tabelaCard("📊 Distribuição SEM Intervalo", tabela1);
-
-    // COM INTERVALO (PADRÃO ORIGINAL)
-    let intervalo = parseFloat(document.getElementById("intervalo").value);
-
-    if(intervalo>0){
-
-        let min=dados[0], max=dados[dados.length-1];
-        let classes=[];
-
-        for(let i=min;i<=max;i+=intervalo){
-            classes.push({inicio:i,fim:i+intervalo,fi:0});
+    let stats = resumoEstatistico(dados);
+    
+    let html = "";
+    
+    // Card Estatísticas Avançadas
+    html += tabelaCard("📊 Estatísticas Descritivas Avançadas", "fas fa-chart-line", gerarEstatisticasCard(stats));
+    
+    // Card Dados Ordenados
+    let dadosAmostra = dados.length > 100 ? dados.slice(0,100).join(", ") + ` ... e mais ${dados.length-100} valores` : dados.join(", ");
+    html += tabelaCard("🔢 Dados Ordenados", "fas fa-sort-amount-down", `<div class="max-h-48 overflow-y-auto p-2 bg-slate-50 rounded-lg font-mono text-sm">${dadosAmostra}</div>`);
+    
+    // Distribuição sem intervalo
+    let tabelaSimples = gerarTabelaFrequencia(dados, total, false);
+    html += tabelaCard("📋 Distribuição de Frequências (Pontual)", "fas fa-table", tabelaSimples);
+    
+    // Intervalo de classe
+    let intervaloVal = parseFloat(document.getElementById("intervalo").value);
+    let classesGeradas = null;
+    if(!isNaN(intervaloVal) && intervaloVal>0 && dados.length>0) {
+        let min = dados[0];
+        let max = dados[dados.length-1];
+        let classes = [];
+        for(let i=min; i<=max; i+=intervaloVal) {
+            classes.push({inicio:i, fim:i+intervaloVal, fi:0});
         }
-
         dados.forEach(v=>{
             for(let i=0;i<classes.length;i++){
                 let c=classes[i];
@@ -167,46 +365,70 @@ function processar(){
                 }
             }
         });
-
-        acum=0;
-
-        let tabela2 = "<table class='border-collapse border w-full text-center'><tr><th class='border p-2'>Classe</th><th class='border p-2'>fi</th><th class='border p-2'>xi</th><th class='border p-2'>fri</th><th class='border p-2'>Fi</th><th class='border p-2'>Fri</th></tr>";
-
-        classes.forEach(c=>{
-            if(c.fi===0) return;
-
-            let xi=(c.inicio+c.fim)/2;
-            let fri=c.fi/total;
-
-            acum+=c.fi;
-            let Fri=acum/total;
-
-            tabela2 += `<tr>
-            <td class='border p-2'>${c.inicio} |------ ${c.fim}</td>
-            <td class='border p-2'>${c.fi}</td>
-            <td class='border p-2'>${xi}</td>
-            <td class='border p-2'>${fri.toFixed(3)}</td>
-            <td class='border p-2'>${acum}</td>
-            <td class='border p-2'>${Fri.toFixed(3)}</td>
-            </tr>`;
-        });
-
-        tabela2 += `<tr>
-        <td class='border p-2'><b>Total</b></td>
-        <td class='border p-2'>${total}</td>
-        <td class='border p-2'>-</td>
-        <td class='border p-2'>1.000</td>
-        <td class='border p-2'>${total}</td>
-        <td class='border p-2'>1.000</td>
-        </tr></table>`;
-
-        html += tabelaCard("📈 Distribuição COM Intervalo", tabela2);
+        classes = classes.filter(c=>c.fi>0);
+        if(classes.length>0){
+            classesGeradas = classes;
+            let tabelaIntervalo = gerarTabelaFrequencia(dados, total, true, classes);
+            html += tabelaCard("📈 Distribuição com Intervalo (Agrupada)", "fas fa-chart-simple", tabelaIntervalo);
+        } else {
+            html += tabelaCard("⚠️ Intervalo sem classes válidas", "fas fa-exclamation-triangle", "<p class='text-amber-600'>Intervalo muito grande ou pequeno. Nenhuma classe gerada com frequência >0.</p>");
+        }
+    } else if(intervaloVal>0) {
+        html += tabelaCard("Intervalo Inválido", "fas fa-ban", "<p>Intervalo não gerou classes apropriadas. Verifique os dados.</p>");
     }
-
+    
+    // Gráfico e container
+    html += `<div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+        <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b"><h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-chart-column text-blue-600"></i> Visualização Gráfica</h3></div>
+        <div id="graficoContainer" class="p-6"><canvas id="histogramCanvas" style="max-height: 400px; width:100%"></canvas></div>
+    </div>`;
+    
     document.getElementById("resultado").innerHTML = html;
+    
+    // Renderizar gráfico após DOM
+    setTimeout(() => {
+        if(classesGeradas && classesGeradas.length>0) {
+            renderizarGraficos(dados, classesGeradas);
+        } else {
+            renderizarGraficos(dados, null);
+        }
+    }, 50);
 }
 
-</script>
+// Evento de leitura Excel otimizado
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    let file = e.target.files[0];
+    if(!file) return;
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        let data = new Uint8Array(e.target.result);
+        let workbook = XLSX.read(data, {type: 'array'});
+        let sheet = workbook.Sheets[workbook.SheetNames[0]];
+        let json = XLSX.utils.sheet_to_json(sheet, {header:1, defval:""});
+        let valores = [];
+        json.forEach(l => {
+            if(Array.isArray(l)){
+                l.forEach(c => {
+                    if(c !== "" && c !== null && !isNaN(parseFloat(c)) && isFinite(c)) {
+                        let num = parseFloat(c);
+                        if(!isNaN(num)) valores.push(num);
+                    }
+                });
+            }
+        });
+        if(valores.length===0) alert("Nenhum dado numérico encontrado na planilha.");
+        valores.sort((a,b)=>a-b);
+        document.getElementById("manualData").value = valores.join(" ");
+        // auto processar após import
+        processar();
+    };
+    reader.readAsArrayBuffer(file);
+});
 
+// Inicializar com mensagem amigável
+window.onload = () => {
+    document.getElementById("resultado").innerHTML = '<div class="text-center text-slate-400 p-12 bg-white rounded-2xl shadow"><i class="fas fa-chart-line text-4xl mb-3"></i><p>Pronto para análise! Carregue dados ou insira manualmente e clique em Processar.</p></div>';
+};
+</script>
 </body>
 </html>
